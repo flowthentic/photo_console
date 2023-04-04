@@ -2,7 +2,7 @@
 
 abstract class InputLine
 {
-  protected const date_format = 'd.m.Y';
+  protected const dateformat = 'd.m.Y';
   protected $cells;
   
   protected function __construct($args)

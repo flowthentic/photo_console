@@ -9,7 +9,7 @@ class DataLine extends InputLine
     // load args that are the same for every line
     parent::__construct($args);
     // load args that are unique to data lines
-    $this->cells[] = date_parse_from_format(parent::date_format, $args[3]);
+    $this->cells[] = \DateTime::createFromFormat(parent::dateformat, $args[3])->setTime(0,0);
     $this->cells[] = (int)$args[4];
   }
 }
