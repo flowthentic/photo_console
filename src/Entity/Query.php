@@ -11,43 +11,35 @@ class Query extends InputLine
   {
     // load args that are the same for every line
     parent::__construct($args);
-    // stripe off aterix
+    // escape dots for constructing preg_ patterns
+    $this->cells = array_map('preg_quote', $this->cells);
     
-    // load args that are unique to queries
+    // load date conditions
     $range = explode('-', $args[3]);
-    $this->date_from = $this->date_to = date_parse_from_format('d.m.Y', $range[0]);
-    if (isset($range[1]))  // overwrite date_to if it is specified
-      $this->date_to = date_parse_from_format('d.m.Y', $range[1]);
+    $this->cells[] = date_parse_from_format('d.m.Y', $range[0]); // date_from
+    if (isset($range[1]))  // date_to if it was specified
+      $this->cells[] = date_parse_from_format('d.m.Y', $range[1]);
   }
   public function __toString()
   {
-    $selected = array();
-    $svar_col = array_column(self::$input, 'service_variation');
-    //var_dump($svar_col);
-    $csub_col = array_column(self::$input, 'category_subcategory');
-    $rtyp_col = array_column(self::$input, 'response_type');
+    // assign array of all records to the first element of selected array
+    $selected[] = array_column(self::$input, 'cells');
     
-    
-    
-    
-    for ($col = 0; $col < 3; $col++)
+    for ($col = 0; $col < 3; $col++) // use preg selection for first three cells
     {
-      
+      $pattern = '/^'.$this->cells[$col].'(\.|$)/';
+      $selected[] = preg_grep($pattern, array_column($selected[0], $col));
     }
     
-    $selected[] = $svar_col; // first is an array of all lines' keys
-    $selected[] = preg_grep('/^1\.|$/', $svar_col);
-    var_dump($selected);
+    // stripe off all rows where any of the criteria haven't been met
+    $selected = call_user_func_array('array_intersect_key', $selected);
+    // we are interested only in time column with minutes
+    $selected = array_column($selected, 4);
     
-    
-    /*foreach ($line in self::$input)
-    {
-      $services_matched = preg_grep('/^\.|\w/',) ($line->$service_variation);
-      var_dump($selected)
-    }*/
-    
-    
-    $selected = call_user_func_array('array_intersect', $selected);
+    if (count($selected))
+      // calculate the average of response time
+      return array_sum($selected) / count($selected);
+    else return '-'; // if no records have been selected
   }
 }
 
