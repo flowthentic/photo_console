@@ -4,6 +4,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\{InputDefinition, InputArgument};
 use App\Entity\{InputLine, DataLine, Query};
 
 // the name of the command is what users type after "php bin/console"
@@ -18,11 +19,12 @@ class AnalyzeCommand extends Command
     {
         try
         {
-            // If testing this will get input added by `CommandTester::setInputs` method.
-            $inputStream = ($input instanceof StreamableInputInterface) ? $input->getStream() : STDIN;
+            // If testing get input through getStream method
+            $inputStream = $input->getStream() ?? STDIN;
             Query::$input = array();
             for ($S = (int)fgets($inputStream); $S > 0; $S--)
             {
+     //           $output->writeln($S);
                 $line = explode(' ', fgets($inputStream));
                 $line_type = array_shift($line);
                 if ($line_type == 'C') // waiting timeline
@@ -50,6 +52,11 @@ class AnalyzeCommand extends Command
     {
         $this
             ->setHelp('Analyzes response times.')
+            ->setDefinition(
+                new InputDefinition([
+                    new InputArgument('input', InputArgument::OPTIONAL)
+                ])
+            )
         ;
     }
 }
