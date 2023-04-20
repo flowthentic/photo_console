@@ -20,7 +20,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
             
-    App\Command\AnalyzeCommand:
+    App\Command\Import:
         tags: ['console.command']
 
     # add more service definitions when explicit configuration is needed
