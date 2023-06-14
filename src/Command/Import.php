@@ -5,25 +5,25 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\{InputOption, InputArgument};
-use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\Console\Question\Question;
 use App\Entity\Photo;
 
 #[AsCommand('import')]
 class Import extends Command
 {
-    private String $destination;
     private $action, $actName;
+    
     protected function initialize(InputInterface $input, OutputInterface $output): int
     {
         Photo::$delta = new \DateInterval($input->getOption('add') ?? 'P0D');
         if ($input->getOption('rename'))
         {
-            Photo::$outputFormat = 'Y/m/d/His.';
+            Photo::$outputFormat = '/Y/m/d/His.';
             Photo::$suffix = PATHINFO_EXTENSION;
         }
         else
         {
-            Photo::$outputFormat = 'Y/m/d/';
+            Photo::$outputFormat = '/Y/m/d/';
             Photo::$suffix = PATHINFO_BASENAME;
         }
         
@@ -38,17 +38,17 @@ class Import extends Command
             $this->actName = "Copy";
         }
         
-        Photo::$prefix = '/home/jakubo/Pictures';
+        Photo::$prefix = getenv('HOME').'/Pictures';
         return Command::SUCCESS;
     }
     protected function interact(InputInterface $input, OutputInterface $output): int
     {
         $iohelper = $this->getHelper('question');
-        $question = sprintf('Import to %s? [y/N] ', Photo::$suffix);
-        $question = new ConfirmationQuestion($question, false, '/^y/i');
-        if (!$iohelper->ask($input, $output, $question))
-            return Command::SUCCESS;
-        else return Command::INVALID;
+        $question = sprintf('Where would you like to import your photos? [%s] ', Photo::$prefix);
+        $question = new Question($question, Photo::$prefix);
+        while (!is_dir($this->destination = $iohelper->ask($input, $output, $question)))
+            $output->writeln("The directory $this->destination does not exist");
+        return Command::SUCCESS;
     }
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -59,7 +59,7 @@ class Import extends Command
                 if (is_dir($path)) continue;
                 $photo = new Photo($path);
                 echo "$this->actName $path to $photo\n";
-                //$this->action($path, $photo);
+                $this->action($path, $photo);
             }
             return Command::SUCCESS;
         }
@@ -80,4 +80,3 @@ class Import extends Command
         ->addOption('force', 'f', InputOption::VALUE_NONE, 'Include unrecognized file types.');
     }
 }
-?>
